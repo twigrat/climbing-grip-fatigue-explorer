@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Climbing Fatigue Explorer — UA92 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:    #F4F0E8;
+  --cream2:   #EDE8DC;
+  --cream3:   #E5DFD0;
+  --brown:    #4A3728;
+  --brown2:   #6B4F3A;
+  --brown3:   #8B6E55;
+  --crimp:    #C0402A;
+  --crimp2:   #D4604A;
+  --crimp-bg: #F7EAE7;
+  --hcrimp:   #B8820A;
+  --hcrimp2:  #D4A020;
+  --hcrimp-bg:#FBF3E0;
+  --sloper:   #4A7A5A;
+  --sloper2:  #6A9A7A;
+  --sloper-bg:#E8F2EB;
+  --text:     #2E2018;
+  --muted:    #7A6555;
+  --border:   rgba(74,55,40,0.12);
+  --border2:  rgba(74,55,40,0.2);
+  --r:        14px;
+  --r-sm:     10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--cream);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* subtle texture */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(192,64,42,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(74,122,90,0.04) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+.page{position:relative;z-index:1;max-width:580px;margin:0 auto;padding:0 0 3rem;}
+
+/* ── HERO HEADER ── */
+.hero{
+  background: var(--brown);
+  padding: 1.5rem 1.5rem 1.25rem;
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;
+  bottom:0;left:0;right:0;height:1px;
+  background:rgba(255,255,255,0.12);
+}
+.hero-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:0.15em;
+  color:rgba(255,255,255,0.5);
+  text-transform:uppercase;margin-bottom:0.5rem;
+}
+.hero-title{
+  font-size:clamp(1.5rem,6vw,2.1rem);
+  font-weight:900;color:#fff;
+  line-height:1.1;letter-spacing:-0.02em;
+  margin-bottom:0.4rem;
+}
+.hero-title span{color:#F4A97A}
+.hero-sub{
+  font-size:0.85rem;
+  color:rgba(255,255,255,0.6);
+  line-height:1.5;
+}
+/* floating blob decorations */
+.hero-blobs{
+  position:absolute;top:0;right:0;bottom:0;
+  width:120px;pointer-events:none;overflow:hidden;
+}
+.blob{
+  position:absolute;
+  border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+
+/* ── BODY ── */
+.body{padding:1.25rem 1.25rem 0;}
+
+/* ── SECTION LABEL ── */
+.section-label{
+  font-family:'Space Mono',monospace;
+  font-size:9.5px;letter-spacing:0.15em;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:0.75rem;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+
+/* ── GRIP SELECTOR ── */
+.grip-selector{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin-bottom:1.25rem;
+}
+.grip-btn{
+  background:#fff;
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  padding:0.75rem 0.4rem 0.6rem;
+  cursor:pointer;
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  position:relative;
+  box-shadow:0 2px 8px rgba(74,55,40,0.06);
+  min-height:130px;
+}
+.grip-btn:active{transform:scale(0.95)}
+
+.grip-btn[data-grip="crimp"]    { --gc: var(--crimp);  --gc2: var(--crimp-bg);  }
+.grip-btn[data-grip="halfcrimp"]{ --gc: var(--hcrimp); --gc2: var(--hcrimp-bg); }
+.grip-btn[data-grip="sloper"]   { --gc: var(--sloper); --gc2: var(--sloper-bg); }
+
+.grip-btn.on{
+  background:var(--gc2);
+  border-color:var(--gc);
+  box-shadow:0 3px 12px rgba(0,0,0,0.1);
+  transform:translateY(-2px);
+}
+.grip-btn .gname{
+  font-size:0.75rem;font-weight:800;
+  letter-spacing:0.04em;
+  color:var(--muted);
+  transition:color 0.2s;
+  text-transform:uppercase;
+}
+.grip-btn.on .gname{color:var(--gc)}
+.grip-btn .gdesc{
+  font-family:'Space Mono',monospace;
+  font-size:8.5px;color:var(--muted);
+  text-align:center;line-height:1.4;
+}
+.grip-icon{width:66px;height:72px}
+
+/* checkmark badge */
+.grip-btn .check{
+  position:absolute;top:6px;right:6px;
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--gc);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+  transform:scale(0);
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.grip-btn.on .check{opacity:1;transform:scale(1)}
+.grip-btn .check svg{width:8px;height:8px}
+
+/* ── METRIC TABS ── */
+.tabs{
+  display:flex;gap:6px;margin-bottom:1.25rem;
+  overflow-x:auto;padding-bottom:2px;
+  -webkit-overflow-scrolling:touch;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex-shrink:0;
+  padding:0.45rem 1rem;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  font-family:'Nunito',sans-serif;
+  font-size:0.82rem;font-weight:700;
+  color:var(--muted);cursor:pointer;
+  transition:all 0.15s;
+  white-space:nowrap;
+}
+.tab:active{transform:scale(0.97)}
+.tab.active{
+  background:var(--brown);
+  border-color:var(--brown);
+  color:#fff;
+}
+
+/* ── CHART CARD ── */
+.chart-card{
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:var(--r);
+  padding:1.25rem 1rem 1rem;
+  margin-bottom:1rem;
+  box-shadow:0 4px 16px rgba(74,55,40,0.07);
+  position:relative;overflow:hidden;
+}
+.chart-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--crimp),var(--hcrimp),var(--sloper));
+  border-radius:var(--r) var(--r) 0 0;
+}
+.chart-label{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:0.12em;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:1rem;margin-top:2px;
+}
+canvas{width:100%!important;display:block}
+
+/* ── SCRUBBER ── */
+.scrubber-wrap{
+  background:var(--cream2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:1rem 1.1rem 0.9rem;
+  margin-top:0.75rem;
+}
+.scrubber-top{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:0.6rem;
+}
+.scrubber-title{
+  font-family:'Space Mono',monospace;font-size:9px;
+  letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;
+}
+.q-label{
+  font-size:0.82rem;font-weight:800;
+  color:var(--brown);
+}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:4px;
+  background:var(--cream3);border-radius:2px;outline:none;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--brown);border:3px solid var(--cream);
+  cursor:pointer;
+  box-shadow:0 2px 6px rgba(74,55,40,0.25);
+  transition:transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2)}
+input[type=range]::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--brown);border:3px solid var(--cream);
+  cursor:pointer;
+}
+.q-ticks{
+  display:flex;justify-content:space-between;margin-top:6px;
+}
+.q-tick{
+  font-family:'Space Mono',monospace;font-size:8px;
+  color:var(--muted);text-align:center;
+}
+
+/* ── STAT TILES ── */
+.snapshot{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin-bottom:1rem;
+}
+.snap-tile{
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:0.85rem 0.7rem;
+  box-shadow:0 2px 8px rgba(74,55,40,0.05);
+  transition:opacity 0.2s,transform 0.2s;
+  text-align:center;
+}
+.snap-tile.dim{opacity:0.3;transform:scale(0.97)}
+.snap-tile .st-accent{
+  width:28px;height:3px;border-radius:2px;
+  margin:0 auto 6px;
+}
+.snap-tile .st-label{
+  font-family:'Space Mono',monospace;font-size:8.5px;
+  color:var(--muted);text-transform:uppercase;
+  letter-spacing:0.08em;margin-bottom:4px;line-height:1.3;
+}
+.snap-tile .st-val{
+  font-size:1.4rem;font-weight:900;
+  letter-spacing:-0.03em;line-height:1;
+  margin-bottom:3px;
+}
+.snap-tile .st-sub{
+  font-family:'Space Mono',monospace;font-size:8px;
+  color:var(--muted);
+}
+
+/* ── INSIGHT CARD ── */
+.insight{
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:1.1rem 1.15rem;
+  margin-bottom:0.75rem;
+  font-size:0.875rem;
+  line-height:1.75;
+  color:var(--muted);
+  position:relative;overflow:hidden;
+  box-shadow:0 2px 8px rgba(74,55,40,0.05);
+}
+.insight::before{
+  content:'';
+  position:absolute;left:0;top:0;bottom:0;width:4px;
+  border-radius:var(--r-sm) 0 0 var(--r-sm);
+}
+.insight.i-crimp::before {background:var(--crimp)}
+.insight.i-hcrimp::before{background:var(--hcrimp)}
+.insight.i-sloper::before{background:var(--sloper)}
+.insight.i-brown::before {background:var(--brown)}
+.insight strong{color:var(--brown);font-weight:800}
+
+/* dynamic insight with icon */
+.dynamic-insight{
+  background:var(--cream2);
+  border:1.5px solid var(--border2);
+  border-radius:var(--r);
+  padding:1.1rem 1.25rem 1.1rem 1rem;
+  margin-bottom:1rem;
+  font-size:0.88rem;line-height:1.7;
+  color:var(--muted);
+  display:flex;gap:10px;align-items:flex-start;
+  transition:all 0.25s;
+}
+.di-icon{
+  flex-shrink:0;width:32px;height:32px;
+  background:var(--brown);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:2px;
+}
+.di-icon svg{width:16px;height:16px}
+.dynamic-insight strong{color:var(--brown);font-weight:800}
+
+/* ── EFFECT BADGE ── */
+.ebadge{
+  display:inline-block;
+  background:var(--crimp-bg);
+  border:1.5px solid rgba(192,64,42,0.25);
+  border-radius:6px;
+  padding:1px 7px;
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--crimp);font-weight:700;
+  white-space:nowrap;
+}
+
+/* ── CLIMBING FIGURE DIVIDER ── */
+.figure-divider{
+  display:flex;align-items:center;gap:12px;
+  margin:1.25rem 0 1rem;
+}
+.figure-divider .line{flex:1;height:1px;background:var(--border)}
+.figure-divider .climber-wrap{
+  display:flex;gap:8px;align-items:center;
+}
+.mini-climber{width:28px;height:28px;opacity:0.5}
+
+/* ── GLOSSARY ── */
+.gloss-toggle{
+  width:100%;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.85rem 1.1rem;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:'Nunito',sans-serif;
+  font-weight:800;font-size:0.88rem;
+  color:var(--brown2);
+  cursor:pointer;
+  margin-bottom:0;
+  box-shadow:0 2px 6px rgba(74,55,40,0.05);
+  transition:all 0.15s;
+}
+.gloss-toggle:active{transform:scale(0.99)}
+.gloss-toggle .arrow{transition:transform 0.2s}
+.gloss-toggle.open .arrow{transform:rotate(180deg)}
+
+.gloss-body{
+  display:none;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-top:none;
+  border-radius:0 0 var(--r-sm) var(--r-sm);
+  overflow:hidden;
+  margin-bottom:1rem;
+}
+.gloss-body.open{display:block}
+.gloss-row{
+  display:flex;gap:10px;
+  padding:0.8rem 1.1rem;
+  border-bottom:1px solid var(--border);
+  font-size:0.83rem;line-height:1.6;
+}
+.gloss-row:last-child{border-bottom:none}
+.gloss-term{
+  font-family:'Space Mono',monospace;font-size:9px;
+  color:var(--brown);white-space:nowrap;
+  padding-top:2px;min-width:66px;
+  font-weight:700;text-transform:uppercase;
+  letter-spacing:0.06em;
+}
+.gloss-def{color:var(--muted);font-size:0.82rem}
+
+/* ── FOOTER ── */
+.footer-card{
+  background:var(--brown);
+  border-radius:var(--r);
+  padding:1.1rem 1.25rem;
+  font-family:'Space Mono',monospace;
+  font-size:9.5px;line-height:1.9;
+  color:rgba(255,255,255,0.5);
+  margin-top:1.25rem;
+}
+.footer-card span{color:rgba(255,255,255,0.85);font-weight:700}
+
+/* ── ANIMATIONS ── */
+@keyframes floatUp{
+  from{opacity:0;transform:translateY(8px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+.anim-in{animation:floatUp 0.3s ease forwards}
+
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.04)}
+}
+
+/* climbing figure animations */
+@keyframes climb{
+  0%  {transform:translateY(0px) rotate(-2deg)}
+  50% {transform:translateY(-6px) rotate(2deg)}
+  100%{transform:translateY(0px) rotate(-2deg)}
+}
+.climbing-anim{animation:climb 3s ease-in-out infinite}
+.climbing-anim-2{animation:climb 3.7s ease-in-out infinite 0.5s}
+.climbing-anim-3{animation:climb 4.2s ease-in-out infinite 1s}
+
+/* blob float */
+@keyframes blobFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(4px,-6px) scale(1.05)}
+  66%{transform:translate(-3px,4px) scale(0.97)}
+}
+
+@media(max-width:400px){
+  .snapshot{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-blobs">
+      <div class="blob" style="width:60px;height:60px;top:5px;right:10px;animation:blobFloat 5s ease-in-out infinite"></div>
+      <div class="blob" style="width:35px;height:35px;top:50px;right:55px;animation:blobFloat 7s ease-in-out infinite 1s"></div>
+      <div class="blob" style="width:45px;height:45px;bottom:10px;right:5px;animation:blobFloat 6s ease-in-out infinite 2s"></div>
+    </div>
+    <p class="hero-eyebrow">UA92 Research Showcase · 2026</p>
+    <h1 class="hero-title">Same effort.<br>Different <span>fatigue.</span></h1>
+    <p class="hero-sub">Real sEMG data from 5 climbers. Toggle grips, scrub through time, see when differences emerge.</p>
+  </div>
+
+  <div class="body">
+
+    <!-- GRIP SELECTOR -->
+    <div class="section-label" style="margin-top:1rem">Choose grip conditions</div>
+    <div class="grip-selector" id="gripSelector">
+
+      <button class="grip-btn on" data-grip="crimp" onclick="toggleGrip('crimp',this)">
+        <div class="check">
+          <svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <!-- CRIMP: skeletal phalanges. DIP hyperextended (<90°).
+             Thin 20mm edge at top. Distal phalanx hooks BACK over edge.
+             PIP ~90° sharp bend downward. Proximal angles to palm.
+             Bones drawn as rounded-cap segments; joints as circles. -->
+        <svg class="grip-icon" viewBox="0 0 66 72" fill="none">
+          <!-- ── HOLD: 20 mm thin edge ── -->
+          <rect x="4" y="6" width="58" height="7" rx="3" fill="#C0402A"/>
+          <rect x="4" y="6" width="58" height="7" rx="3" fill="none" stroke="#8B2010" stroke-width="0.8"/>
+          <!-- 20mm depth marker -->
+          <line x1="12" y1="6" x2="12" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+          <line x1="20" y1="6" x2="20" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+          <line x1="28" y1="6" x2="28" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+          <line x1="36" y1="6" x2="36" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+          <line x1="44" y1="6" x2="44" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+          <line x1="52" y1="6" x2="52" y2="13" stroke="#8B2010" stroke-width="0.6" opacity="0.4"/>
+
+          <!-- ── DISTAL PHALANX: hooks back leftward over edge ──
+               Tip at (14,10) curling right to DIP at (32,18) -->
+          <!-- bone body -->
+          <path d="M16 9 Q14 9 14 11 Q14 14 20 16 Q26 18 32 18"
+                stroke="#C0402A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <!-- bone highlight -->
+          <path d="M16 9 Q14 9 14 11 Q14 14 20 16 Q26 18 32 18"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── DIP JOINT at (32,18) ── -->
+          <circle cx="32" cy="18" r="3.5" fill="#FBEBE7" stroke="#C0402A" stroke-width="1.8"/>
+
+          <!-- DIP angle arc — tight, showing hyperextension (<90°) -->
+          <path d="M27 14 A7 7 0 0 0 36 22" stroke="#C0402A" stroke-width="1" fill="none"
+                stroke-dasharray="2.5 1.5" opacity="0.7"/>
+          <!-- angle label -->
+          <text x="37" y="16" font-family="Space Mono, monospace" font-size="6" fill="#C0402A" opacity="0.85">&lt;90°</text>
+
+          <!-- ── MIDDLE PHALANX: drops steeply downward from DIP (32,18) to PIP (30,38) ── -->
+          <path d="M32 18 Q31 28 30 38"
+                stroke="#C0402A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M32 18 Q31 28 30 38"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── PIP JOINT at (30,38) ── -->
+          <circle cx="30" cy="38" r="3.5" fill="#FBEBE7" stroke="#C0402A" stroke-width="1.8"/>
+
+          <!-- ── PROXIMAL PHALANX: sweeps right toward palm (30,38) to (50,56) ── -->
+          <path d="M30 38 Q38 46 50 52"
+                stroke="#C0402A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M30 38 Q38 46 50 52"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── MCP JOINT at (50,52) ── -->
+          <circle cx="50" cy="52" r="3.5" fill="#FBEBE7" stroke="#C0402A" stroke-width="1.8"/>
+
+          <!-- palm stub -->
+          <path d="M50 52 Q55 58 58 65"
+                stroke="#C0402A" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+          <!-- joint labels -->
+          <text x="2" y="41" font-family="Space Mono, monospace" font-size="5.5" fill="#C0402A" opacity="0.6">PIP</text>
+          <text x="4" y="55" font-family="Space Mono, monospace" font-size="5.5" fill="#C0402A" opacity="0.6">MCP</text>
+        </svg>
+        <span class="gname">Crimp</span>
+        <span class="gdesc">DIP &lt;90° · 20 mm edge</span>
+      </button>
+
+      <button class="grip-btn on" data-grip="halfcrimp" onclick="toggleGrip('halfcrimp',this)">
+        <div class="check">
+          <svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <!-- HALF-CRIMP: skeletal phalanges. DIP ~100° — neutral, no hyperextension.
+             Medium 25mm edge. Fingertip points straight down over edge.
+             PIP moderately bent. Proximal angled to palm. -->
+        <svg class="grip-icon" viewBox="0 0 66 72" fill="none">
+          <!-- ── HOLD: 25 mm edge — visibly deeper than crimp's 20 mm ── -->
+          <rect x="4" y="4" width="58" height="10" rx="3" fill="#B8820A"/>
+          <rect x="4" y="4" width="58" height="10" rx="3" fill="none" stroke="#7A5505" stroke-width="0.8"/>
+          <line x1="12" y1="4" x2="12" y2="14" stroke="#7A5505" stroke-width="0.6" opacity="0.4"/>
+          <line x1="22" y1="4" x2="22" y2="14" stroke="#7A5505" stroke-width="0.6" opacity="0.4"/>
+          <line x1="32" y1="4" x2="32" y2="14" stroke="#7A5505" stroke-width="0.6" opacity="0.4"/>
+          <line x1="42" y1="4" x2="42" y2="14" stroke="#7A5505" stroke-width="0.6" opacity="0.4"/>
+          <line x1="52" y1="4" x2="52" y2="14" stroke="#7A5505" stroke-width="0.6" opacity="0.4"/>
+
+          <!-- ── DISTAL PHALANX: points straight downward from edge
+               Tip at (28,14) straight down to DIP at (28,25) ── -->
+          <path d="M28 14 L28 25"
+                stroke="#B8820A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M28 14 L28 25"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── DIP JOINT at (28,25) ── -->
+          <circle cx="28" cy="25" r="3.5" fill="#FBF3E0" stroke="#B8820A" stroke-width="1.8"/>
+
+          <!-- DIP angle arc ~100° -->
+          <path d="M24 20 A7 7 0 0 0 34 28" stroke="#B8820A" stroke-width="1" fill="none"
+                stroke-dasharray="2.5 1.5" opacity="0.7"/>
+          <text x="35" y="23" font-family="Space Mono, monospace" font-size="6" fill="#B8820A" opacity="0.85">~100°</text>
+
+          <!-- ── MIDDLE PHALANX: moderate angle downward-right (28,25) to (34,40) ── -->
+          <path d="M28 25 Q30 32 34 40"
+                stroke="#B8820A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M28 25 Q30 32 34 40"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── PIP JOINT at (34,40) ── -->
+          <circle cx="34" cy="40" r="3.5" fill="#FBF3E0" stroke="#B8820A" stroke-width="1.8"/>
+
+          <!-- ── PROXIMAL PHALANX: sweeps right to palm (34,40) to (52,52) ── -->
+          <path d="M34 40 Q42 46 52 50"
+                stroke="#B8820A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M34 40 Q42 46 52 50"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── MCP JOINT at (52,50) ── -->
+          <circle cx="52" cy="50" r="3.5" fill="#FBF3E0" stroke="#B8820A" stroke-width="1.8"/>
+
+          <!-- palm stub -->
+          <path d="M52 50 Q56 56 57 65"
+                stroke="#B8820A" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+          <text x="2" y="43" font-family="Space Mono, monospace" font-size="5.5" fill="#B8820A" opacity="0.6">PIP</text>
+          <text x="4" y="53" font-family="Space Mono, monospace" font-size="5.5" fill="#B8820A" opacity="0.6">MCP</text>
+        </svg>
+        <span class="gname">Half-Crimp</span>
+        <span class="gdesc">DIP 90–110° · 25 mm edge</span>
+      </button>
+
+      <button class="grip-btn on" data-grip="sloper" onclick="toggleGrip('sloper',this)">
+        <div class="check">
+          <svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <!-- SLOPER: skeletal phalanges. DIP >160° — nearly straight.
+             Large rounded hold. Finger drapes over curve, no edge.
+             All three phalanges nearly in line. -->
+        <svg class="grip-icon" viewBox="0 0 66 72" fill="none">
+          <!-- ── HOLD: large rounded sloper surface ── -->
+          <path d="M4 38 Q4 8 33 8 Q62 8 62 38"
+                stroke="#4A7A5A" stroke-width="2" fill="#E8F2EB" stroke-linejoin="round"/>
+          <!-- surface shading -->
+          <path d="M10 32 Q10 14 33 14 Q56 14 56 32"
+                stroke="#4A7A5A" stroke-width="0.8" fill="none" opacity="0.3"/>
+
+          <!-- ── DISTAL PHALANX: nearly horizontal, tip at left side of hold
+               From (12,20) to DIP at (24,16) — nearly flat ── -->
+          <path d="M12 22 Q16 18 24 17"
+                stroke="#4A7A5A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M12 22 Q16 18 24 17"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── DIP JOINT at (24,17) ── -->
+          <circle cx="24" cy="17" r="3.5" fill="#E8F2EB" stroke="#4A7A5A" stroke-width="1.8"/>
+
+          <!-- DIP angle arc >160° — wide open arc -->
+          <path d="M18 14 A8 8 0 0 0 30 19" stroke="#4A7A5A" stroke-width="1" fill="none"
+                stroke-dasharray="2.5 1.5" opacity="0.7"/>
+          <text x="30" y="13" font-family="Space Mono, monospace" font-size="6" fill="#4A7A5A" opacity="0.85">&gt;160°</text>
+
+          <!-- ── MIDDLE PHALANX: nearly straight continuation (24,17) to PIP (40,19) ── -->
+          <path d="M24 17 Q32 17 40 19"
+                stroke="#4A7A5A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M24 17 Q32 17 40 19"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── PIP JOINT at (40,19) ── -->
+          <circle cx="40" cy="19" r="3.5" fill="#E8F2EB" stroke="#4A7A5A" stroke-width="1.8"/>
+
+          <!-- ── PROXIMAL PHALANX: slight downward slope to palm (40,19) to (56,28) ── -->
+          <path d="M40 19 Q48 22 56 28"
+                stroke="#4A7A5A" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M40 19 Q48 22 56 28"
+                stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+          <!-- ── MCP JOINT at (56,28) ── -->
+          <circle cx="56" cy="28" r="3.5" fill="#E8F2EB" stroke="#4A7A5A" stroke-width="1.8"/>
+
+          <!-- palm stub -->
+          <path d="M56 28 Q60 36 60 45"
+                stroke="#4A7A5A" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+          <text x="4" y="49" font-family="Space Mono, monospace" font-size="5.5" fill="#4A7A5A" opacity="0.6">PIP</text>
+          <text x="53" y="40" font-family="Space Mono, monospace" font-size="5.5" fill="#4A7A5A" opacity="0.6">MCP</text>
+        </svg>
+        <span class="gname">Sloper</span>
+        <span class="gdesc">DIP &gt;160° · rounded</span>
+      </button>
+
+    </div>
+
+    <!-- METRIC TABS -->
+    <div class="tabs">
+      <button class="tab active" data-metric="mdf"   onclick="setMetric('mdf',this)">📉 MDF — peripheral fatigue</button>
+      <button class="tab"        data-metric="force" onclick="setMetric('force',this)">💪 Force output</button>
+      <button class="tab"        data-metric="tte"   onclick="setMetric('tte',this)">⏱ Endurance</button>
+    </div>
+
+    <!-- CHART -->
+    <div class="chart-card">
+      <div class="chart-label" id="chartLabel">FDS Median Frequency (Hz) — group mean, n=5</div>
+      <canvas id="mainChart" height="230"></canvas>
+      <div class="scrubber-wrap" id="scrubberWrap">
+        <div class="scrubber-top">
+          <span class="scrubber-title">Time into effort →</span>
+          <span class="q-label" id="qLabel">Q1 · Start</span>
+        </div>
+        <input type="range" min="0" max="3" step="1" value="0" id="qSlider" oninput="onScrub(this.value)">
+        <div class="q-ticks">
+          <span class="q-tick">Start</span>
+          <span class="q-tick">25%</span>
+          <span class="q-tick">50%</span>
+          <span class="q-tick">Near exh.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAT TILES -->
+    <div class="snapshot" id="snapshot"></div>
+
+    <!-- DYNAMIC INSIGHT -->
+    <div class="dynamic-insight" id="dynamicInsight">
+      <div class="di-icon">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 2.5a.75.75 0 110 1.5.75.75 0 010-1.5zM8 7v4.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div id="insightText"></div>
+    </div>
+
+    <!-- DIVIDER WITH CLIMBING FIGURES -->
+    <div class="figure-divider">
+      <div class="line"></div>
+      <div class="climber-wrap">
+        <!-- tiny climber silhouettes matching the deck style -->
+        <svg class="mini-climber climbing-anim" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="5" r="3" fill="#4A3728"/>
+          <path d="M14 8 L12 16 M14 8 L16 16" stroke="#4A3728" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 16 L10 22 M12 16 L14 20 M14 20 L16 22 M16 16 L18 22" stroke="#4A3728" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M12 11 L9 14 M16 11 L19 14" stroke="#4A3728" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <svg class="mini-climber climbing-anim-2" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="5" r="3" fill="#C0402A"/>
+          <path d="M14 8 L11 16 M14 8 L17 16" stroke="#C0402A" stroke-width="2" stroke-linecap="round"/>
+          <path d="M11 16 L9 22 M11 16 L14 20 M14 20 L17 22 M17 16 L19 22" stroke="#C0402A" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M12 11 L8 13 M16 11 L20 13" stroke="#C0402A" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <svg class="mini-climber climbing-anim-3" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="5" r="3" fill="#4A7A5A"/>
+          <path d="M14 8 L13 16 M14 8 L15 16" stroke="#4A7A5A" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 16 L11 22 M13 16 L14 20 M14 20 L15 20 M15 16 L17 22" stroke="#4A7A5A" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M13 12 L10 15 M15 12 L18 15" stroke="#4A7A5A" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="line"></div>
+    </div>
+
+    <!-- KEY FINDINGS -->
+    <div class="section-label">Key findings</div>
+
+    <div class="insight i-crimp">
+      <strong>Crimp burns out fastest.</strong> MDF FDS declined at −2.59 Hz per repetition — nearly 4× faster than sloper (−0.69 Hz/rep). Crimp concentrates mechanical load on the fingertip, generating pulley forces 5–6× body weight. It also accounts for 44% of all climbing finger injuries.
+    </div>
+    <div class="insight i-sloper">
+      <strong>Grip differences emerge by mid-effort, not at the wall.</strong> Separation between crimp and sloper was most pronounced by Q2 — 25–50% of time-to-exhaustion. Switching to a less fatiguing grip is most effective before you feel pumped, not after.
+    </div>
+    <div class="insight i-brown">
+      <strong>Three independent measures all agree.</strong> MDF slope, force degradation, and time-to-exhaustion all point in the same ordinal direction: Crimp → Half-Crimp → Sloper in fatigue rate.
+      Effect size: <span class="ebadge">ηp² = .512 — exceptional</span>
+    </div>
+    <div class="insight i-hcrimp">
+      <strong>Half-crimp is the pragmatic middle ground.</strong> It accounts for 42% of all grip positions observed during climbing — its intermediate fatigue rate makes it the physiologically sensible default on sustained routes.
+    </div>
+
+    <!-- GLOSSARY -->
+    <div class="figure-divider">
+      <div class="line"></div>
+    </div>
+
+    <button class="gloss-toggle" id="glossToggle" onclick="toggleGloss()">
+      <span>🔍 Plain-English glossary</span>
+      <svg class="arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="gloss-body" id="glossBody">
+      <div class="gloss-row"><span class="gloss-term">MDF</span><span class="gloss-def">Median frequency. As the muscle tires, its electrical signal shifts to lower frequencies. A steeper MDF drop = faster peripheral fatigue accumulation inside the muscle.</span></div>
+      <div class="gloss-row"><span class="gloss-term">sEMG</span><span class="gloss-def">Surface electromyography. Electrodes on the skin pick up the electrical activity your forearm muscles produce during each contraction. Like listening to the muscle's electrical heartbeat.</span></div>
+      <div class="gloss-row"><span class="gloss-term">FDS</span><span class="gloss-def">Flexor digitorum superficialis — the forearm muscle that bends your fingers' middle joints. The key muscle driving grip-specific fatigue differences in this study.</span></div>
+      <div class="gloss-row"><span class="gloss-term">70% MVC</span><span class="gloss-def">Participants held 70% of their personal maximum grip force. Hard enough to guarantee fatigue, realistic enough to reflect actual climbing demands.</span></div>
+      <div class="gloss-row"><span class="gloss-term">ηp² = .512</span><span class="gloss-def">Effect size — how much of the variation in fatigue rate is explained by grip type. At .512 this is very large. Cohen's benchmark for "large" is just .14. This tells us: these differences are real and worth studying at scale.</span></div>
+      <div class="gloss-row"><span class="gloss-term">Pilot study</span><span class="gloss-def">A small-scale study designed to estimate effect sizes and test protocols — not to prove a hypothesis. n=5 here is intentional. The effect sizes will power a confirmatory study of ~20–25 participants.</span></div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer-card">
+      <span>Dan Talalla</span> · BSc (Hons) Sport &amp; Exercise Science<br>
+      <span>University Academy 92</span>, Manchester · 2026<br>
+      Supervisor: <span>Chris Wallace</span> · Ethics ref: <span>UA_WoS_0427</span><br>
+      Protocol: MacLeod 7:3 intermittent · 70% grip-specific MVC to exhaustion<br>
+      Equipment: Delsys Trigno Avanti sEMG · Tindeq Progressor 500
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /page -->
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────
+const G = {
+  crimp:     { label:'Crimp',      color:'#C0402A', color2:'#D4604A', bg:'#FBEBE7', mdf:[110,100,90,80], sd:[8,7,9,10], force:[81,78,74,68], tte:112 },
+  halfcrimp: { label:'Half-Crimp', color:'#B8820A', color2:'#D4A020', bg:'#FBF3E0', mdf:[110,103,96,90], sd:[6,7,6,8],  force:[80,77,74,70], tte:120 },
+  sloper:    { label:'Sloper',     color:'#4A7A5A', color2:'#6A9A7A', bg:'#E8F2EB', mdf:[108,106,102,99],sd:[7,6,7,6],  force:[79,77,75,73], tte:138 }
+};
+
+const SLOPES = { crimp:'−2.59', halfcrimp:'−1.97', sloper:'−0.69' };
+const Q_SHORT = ['Q1 · Start','Q2 · 25–50%','Q3 · 50–75%','Q4 · Near exhaustion'];
+
+const insights = {
+  mdf:[
+    '<strong>At the start of effort (Q1)</strong>, all three grips look similar — MDF around 108–110 Hz. Fatigue hasn\'t accumulated yet. This is the baseline.',
+    '<strong>By Q2 (25–50% of effort)</strong>, crimp is already pulling away from sloper. This is the critical finding — divergence appears early, not just at the point of failure.',
+    '<strong>At Q3 (50–75%)</strong>, the gap is substantial. Metabolic byproducts are accumulating fastest under crimp, slowing the muscle\'s electrical signals.',
+    '<strong>Near exhaustion (Q4)</strong>, crimp MDF has dropped ~30 Hz from baseline; sloper only ~9 Hz. The same hang, very different physiology depending on grip position.'
+  ],
+  force:[
+    '<strong>At the start</strong>, all conditions produce similar force near the 70% MVC target. Protocol is standardised across grips.',
+    '<strong>By Q2</strong>, slight divergence in force maintenance appears — consistent with the MDF findings. Crimp shows the steepest decline.',
+    '<strong>At Q3</strong>, force degradation is accumulating. The crimp condition is tracking fastest toward the exhaustion threshold.',
+    '<strong>Near exhaustion</strong>, crimp force degradation slope (−0.81 %MVC/rep) mirrors its MDF trajectory — both peripheral and mechanical evidence converging.'
+  ],
+  tte:['<strong>Sloper allows the longest sustained effort</strong> (138s mean). Crimp produces the shortest (112s). The same ordinal direction as MDF slope and force degradation — three independent measures converging on the same conclusion.']
+};
+
+let visible = { crimp:true, halfcrimp:true, sloper:true };
+let metric  = 'mdf';
+let qIndex  = 0;
+
+// ── TOGGLE ──────────────────────────────────────────────────────
+function toggleGrip(key, btn) {
+  const anyOther = Object.entries(visible).some(([k,v]) => k !== key && v);
+  if (visible[key] && !anyOther) return;
+  visible[key] = !visible[key];
+  btn.classList.toggle('on', visible[key]);
+  redraw();
+}
+
+function setMetric(m, btn) {
+  metric = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('scrubberWrap').style.display = m === 'tte' ? 'none' : 'block';
+  redraw();
+}
+
+function onScrub(v) {
+  qIndex = +v;
+  document.getElementById('qLabel').textContent = Q_SHORT[qIndex];
+  redraw();
+}
+
+// ── REDRAW ──────────────────────────────────────────────────────
+function redraw() {
+  if (metric === 'tte') drawTTE();
+  else drawLine();
+  updateSnapshot();
+  updateInsight();
+}
+
+// ── LINE CHART ──────────────────────────────────────────────────
+function drawLine() {
+  const canvas = document.getElementById('mainChart');
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const W = canvas.offsetWidth || 520;
+  const H = 230;
+  canvas.width  = W*dpr; canvas.height = H*dpr;
+  canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  document.getElementById('chartLabel').textContent =
+    metric === 'mdf'
+      ? 'FDS Median Frequency (Hz) — group mean ± SD, n=5'
+      : 'Peak Force Output (% grip-specific MVC) — group mean, n=5';
+
+  const dk = metric === 'mdf' ? 'mdf' : 'force';
+  const pad = {top:14, right:14, bottom:38, left:46};
+  const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;
+
+  const vals = Object.entries(G).filter(([k])=>visible[k]).flatMap(([,v])=>v[dk]);
+  if (!vals.length) return;
+  const yMin = Math.floor((Math.min(...vals)-6)/5)*5;
+  const yMax = Math.ceil( (Math.max(...vals)+6)/5)*5;
+
+  const toX = i => pad.left+(i/3)*pW;
+  const toY = v => pad.top+((yMax-v)/(yMax-yMin))*pH;
+
+  // grid lines
+  for (let i=0;i<=4;i++){
+    const v = yMax-((yMax-yMin)/4)*i;
+    const y = toY(v);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+pW,y);
+    ctx.strokeStyle='rgba(74,55,40,0.07)'; ctx.lineWidth=0.75; ctx.stroke();
+    ctx.fillStyle='rgba(74,55,40,0.35)';
+    ctx.font='10px Space Mono, monospace'; ctx.textAlign='right';
+    ctx.fillText(Math.round(v), pad.left-6, y+3.5);
+  }
+
+  // x labels
+  const xlbls=['Q1\n0–25%','Q2\n25–50%','Q3\n50–75%','Q4\n75–100%'];
+  xlbls.forEach((l,i)=>{
+    const x=toX(i), parts=l.split('\n');
+    ctx.textAlign='center';
+    ctx.fillStyle='rgba(74,55,40,0.5)'; ctx.font='10px Space Mono,monospace';
+    ctx.fillText(parts[0],x,H-pad.bottom+14);
+    ctx.fillStyle='rgba(74,55,40,0.25)'; ctx.font='9px Space Mono,monospace';
+    ctx.fillText(parts[1],x,H-pad.bottom+25);
+  });
+
+  // SD bands (mdf only)
+  if (metric==='mdf'){
+    Object.entries(G).forEach(([k,g])=>{
+      if (!visible[k]) return;
+      ctx.beginPath();
+      for (let i=0;i<4;i++) { const x=toX(i),y=toY(g.mdf[i]+g.sd[i]); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+      for (let i=3;i>=0;i--) ctx.lineTo(toX(i),toY(g.mdf[i]-g.sd[i]));
+      ctx.closePath(); ctx.fillStyle=g.color+'20'; ctx.fill();
+    });
+  }
+
+  // lines + dots
+  Object.entries(G).forEach(([k,g])=>{
+    if (!visible[k]) return;
+    const data=g[dk];
+    // line
+    ctx.beginPath();
+    data.forEach((v,i)=>{ i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)); });
+    ctx.strokeStyle=g.color; ctx.lineWidth=2.8; ctx.lineJoin='round'; ctx.setLineDash([]); ctx.stroke();
+    // dots
+    data.forEach((v,i)=>{
+      const x=toX(i), y=toY(v);
+      const active=(i===qIndex && metric==='mdf');
+      // glow ring
+      if (active){
+        ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2);
+        ctx.fillStyle=g.color+'22'; ctx.fill();
+      }
+      // dot fill
+      ctx.beginPath(); ctx.arc(x,y,active?6:4.5,0,Math.PI*2);
+      ctx.fillStyle=g.bg; ctx.fill();
+      ctx.strokeStyle=g.color; ctx.lineWidth=active?2.5:2; ctx.stroke();
+    });
+  });
+
+  // active Q line
+  if (metric==='mdf'){
+    const x=toX(qIndex);
+    ctx.beginPath(); ctx.moveTo(x,pad.top); ctx.lineTo(x,pad.top+pH);
+    ctx.strokeStyle='rgba(74,55,40,0.15)'; ctx.lineWidth=1.5;
+    ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // divergence label
+  if (visible.crimp&&visible.sloper&&qIndex>=1&&metric==='mdf'){
+    const x=toX(1)+5;
+    ctx.font='9px Space Mono,monospace'; ctx.fillStyle='rgba(192,64,42,0.55)';
+    ctx.textAlign='left'; ctx.fillText('divergence ↑',x,pad.top+10);
+  }
+}
+
+// ── TTE CHART ───────────────────────────────────────────────────
+function drawTTE(){
+  const canvas=document.getElementById('mainChart');
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=canvas.offsetWidth||520, H=230;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  document.getElementById('chartLabel').textContent='Time-to-Exhaustion (seconds) — group mean, n=5';
+
+  const pad={top:14,right:14,bottom:38,left:46};
+  const pW=W-pad.left-pad.right, pH=H-pad.top-pad.bottom;
+  const maxV=160;
+
+  [0,40,80,120,160].forEach(v=>{
+    const y=pad.top+((maxV-v)/maxV)*pH;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+pW,y);
+    ctx.strokeStyle='rgba(74,55,40,0.07)'; ctx.lineWidth=0.75; ctx.stroke();
+    ctx.fillStyle='rgba(74,55,40,0.35)'; ctx.font='10px Space Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(v+'s',pad.left-5,y+3.5);
+  });
+
+  const barW=Math.min((pW/3)*0.52, 72);
+  Object.keys(G).forEach((key,idx)=>{
+    const g=G[key]; if(!visible[key]) return;
+    const v=g.tte, bH=(v/maxV)*pH;
+    const cx=pad.left+(idx+0.5)*(pW/3), x=cx-barW/2, y=pad.top+pH-bH;
+    const r=6;
+    // shadow
+    ctx.beginPath(); ctx.arc(cx,pad.top+pH,barW*0.45,0,Math.PI);
+    ctx.fillStyle='rgba(74,55,40,0.06)'; ctx.fill();
+    // bar
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+barW-r,y);
+    ctx.quadraticCurveTo(x+barW,y,x+barW,y+r);
+    ctx.lineTo(x+barW,y+bH); ctx.lineTo(x,y+bH); ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    ctx.fillStyle=g.bg; ctx.fill();
+    ctx.strokeStyle=g.color; ctx.lineWidth=2; ctx.stroke();
+    // value
+    ctx.fillStyle=g.color; ctx.font='700 11px Nunito,sans-serif';
+    ctx.textAlign='center'; ctx.fillText(v+'s',cx,y-8);
+    // label
+    ctx.fillStyle='rgba(74,55,40,0.4)'; ctx.font='9px Space Mono,monospace';
+    ctx.fillText(g.label,cx,H-pad.bottom+14);
+  });
+}
+
+// ── SNAPSHOT ────────────────────────────────────────────────────
+function updateSnapshot(){
+  const el=document.getElementById('snapshot'); el.innerHTML='';
+  Object.entries(G).forEach(([key,g])=>{
+    const tile=document.createElement('div');
+    tile.className='snap-tile anim-in'+(visible[key]?'':' dim');
+    let val, sub;
+    if (metric==='mdf')   { val=SLOPES[key]; sub='Hz / rep (MDF slope)'; }
+    else if(metric==='force'){ val=g.force[qIndex]+'%'; sub='MVC at '+Q_SHORT[qIndex].split('·')[0].trim(); }
+    else                  { val=g.tte+'s'; sub='mean time-to-exhaustion'; }
+    tile.innerHTML=`
+      <div class="st-accent" style="background:${g.color}"></div>
+      <div class="st-label">${g.label}</div>
+      <div class="st-val" style="color:${g.color}">${val}</div>
+      <div class="st-sub">${sub}</div>`;
+    el.appendChild(tile);
+  });
+}
+
+// ── INSIGHT ─────────────────────────────────────────────────────
+function updateInsight(){
+  const arr = insights[metric]||insights.mdf;
+  const txt = arr[metric==='tte'?0:qIndex]||arr[0];
+  document.getElementById('insightText').innerHTML=txt;
+}
+
+// ── GLOSSARY ────────────────────────────────────────────────────
+function toggleGloss(){
+  const b=document.getElementById('glossBody');
+  const t=document.getElementById('glossToggle');
+  const open=b.classList.toggle('open');
+  t.classList.toggle('open',open);
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+window.addEventListener('resize',redraw);
+redraw();
+</script>
+</body>
+</html>
